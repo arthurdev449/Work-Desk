@@ -1,6 +1,6 @@
 $GitHubUser = "arthurdev449"
 $RepoName   = "Work-Desk" 
-$Branch     = "main" 
+$Branch     = "main"
 
 $BaseURL = "https://raw.githubusercontent.com/$GitHubUser/$RepoName/$Branch"
 
@@ -10,7 +10,7 @@ New-Item -ItemType Directory -Force -Path $TempDir | Out-Null
 
 Write-Host "--- INITIALIZING CLOUD SETUP ---" -ForegroundColor Cyan
 
-$ConfigPath = "$TempDir\config.xml"
+$ConfigPath = "$TempDir\config.xml" 
 Write-Host "Installing office xml for pt-br download..."
 Invoke-WebRequest -Uri "$BaseURL/config.xml" -OutFile $ConfigPath
 
@@ -24,14 +24,18 @@ try {
 
 
 $ODTPath = "$TempDir\odt_setup.exe"
-Write-Host "Downloading latest Office Deployment Tool from Microsoft..."
-Invoke-WebRequest -Uri "https://deploymentdownload.my.salesforce.com/sfc/dist/version/download/?oid=00D00000000hW2T&ids=0682K0000089Kq4&d=%2Fa%2F2K0000009uSg%2F.S9_dE1XwJ0l..65e52_.St._oW0j_wW" -OutFile $ODTPath
+Write-Host "Downloading official Office Deployment Tool..."
+Invoke-WebRequest -Uri "https://download.microsoft.com/download/2/7/A/27AF1BE6-DD20-4CB4-B154-EBAB8A7D4A7E/officedeploymenttool_17126-20132.exe" -OutFile $ODTPath
 
 Write-Host "Extracting Office Tool..."
-
 Start-Process -FilePath $ODTPath -ArgumentList "/quiet /extract:`"$TempDir`"" -Wait
 
 $OfficeSetup = "$TempDir\setup.exe"
+
+if (-not (Test-Path $OfficeSetup)) {
+    Write-Error "CRITICAL: setup.exe not found after extraction. ODT download might be corrupt."
+    exit
+}
 
 $ProgramsToCheck = @(
     "*Java*",              

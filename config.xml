@@ -15,4 +15,5 @@
   </Add>
   <Updates Enabled="TRUE" />
   <RemoveMSI />
+
 </Configuration>

@@ -22,21 +22,6 @@ try {
     Write-Warning "Wallpaper not found in repo."
 }
 
-
-$ODTPath = "$TempDir\odt_setup.exe"
-Write-Host "Downloading official Office Deployment Tool..."
-Invoke-WebRequest -Uri "https://download.microsoft.com/download/2/7/A/27AF1BE6-DD20-4CB4-B154-EBAB8A7D4A7E/officedeploymenttool_17126-20132.exe" -OutFile $ODTPath
-
-Write-Host "Extracting Office Tool..."
-Start-Process -FilePath $ODTPath -ArgumentList "/quiet /extract:`"$TempDir`"" -Wait
-
-$OfficeSetup = "$TempDir\setup.exe"
-
-if (-not (Test-Path $OfficeSetup)) {
-    Write-Error "CRITICAL: setup.exe not found after extraction. ODT download might be corrupt."
-    exit
-}
-
 $ProgramsToCheck = @(
     "*Java*",              
     "*Chrome*",          
@@ -69,17 +54,31 @@ foreach ($Program in $ProgramsToCheck) {
         if ($Id -and $Id -ne "Microsoft.Office.365") {
             winget install --id $Id -e --silent --accept-package-agreements --accept-source-agreements
         } 
+        elseif ($Id -eq "Mircosoft.Office.365") {
+            $ODTPath = "$TempDir\odt_setup.exe"
+            Write-Host "Downloading official Office Deployment Tool..."
+            Invoke-WebRequest -Uri "https://download.microsoft.com/download/2/7/A/27AF1BE6-DD20-4CB4-B154-EBAB8A7D4A7E/officedeploymenttool_17126-20132.exe" -OutFile $ODTPath
+
+            Write-Host "Extracting Office Tool..."
+            Start-Process -FilePath $ODTPath -ArgumentList "/quiet /extract:`"$TempDir`"" -Wait
+
+            $OfficeSetup = "$TempDir\setup.exe"
+
+            if (-not (Test-Path $OfficeSetup)) {
+                Write-Error "CRITICAL: setup.exe not found after extraction. ODT download might be corrupt."
+                exit
+            }
+            if (Test-Path $OfficeSetup) {
+                Write-Host "Installing Office 365..." -ForegroundColor Green
+                Start-Process -FilePath $OfficeSetup -ArgumentList "/configure `"$ConfigPath`"" -Wait
+            } else {
+                Write-Error "Office Setup.exe failed to extract."
+            }
+        }
         else {
             Write-Host "   -> Error: Could not determine installer ID for $Program" -ForegroundColor Magenta
         }
     }
-}
-
-if (Test-Path $OfficeSetup) {
-    Write-Host "Installing Office 365..." -ForegroundColor Green
-    Start-Process -FilePath $OfficeSetup -ArgumentList "/configure `"$ConfigPath`"" -Wait
-} else {
-    Write-Error "Office Setup.exe failed to extract."
 }
 
 if (Test-Path $WallpaperPath) {
